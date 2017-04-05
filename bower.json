@@ -6,6 +6,11 @@
     "bower_components",
     "output"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/coot/purescript-morph.git"
+  },
+  "homepage": "https://github.com/coot/purescript-morph",
   "dependencies": {
     "purescript-prelude": "^2.5.0",
     "purescript-console": "^2.0.0",
@@ -15,6 +20,7 @@
     "purescript-lens": "^2.0.0"
   },
   "devDependencies": {
-    "purescript-psci-support": "^2.0.0"
+    "purescript-psci-support": "^2.0.0",
+    "purescript-test-unit": "^10.1.0"
   }
 }
