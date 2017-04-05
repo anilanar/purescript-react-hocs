@@ -8,11 +8,12 @@
     "postinstall": "bower install"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "pulp -w test"
   },
   "author": "Marcin Szamotulski",
   "license": "MIT",
   "dependencies": {
-    "react": "^15.4.2"
+    "react": "^15.4.2",
+    "react-dom": "^15.4.2"
   }
 }
