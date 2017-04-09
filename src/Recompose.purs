@@ -66,7 +66,7 @@ mapPropsSpec
    . (props' -> props)
   -> ReactSpec props state eff
   -> ReactSpec props' Unit eff
-mapPropsSpec f sp = R.spec unit renderFn
+mapPropsSpec f sp = (R.spec unit renderFn) { displayName = sp.displayName <> "Mapped" }
   where
     cls = R.createClass sp
     renderFn this = do
