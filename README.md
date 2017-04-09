@@ -14,4 +14,4 @@ bower install purescript-recompose
 
 # Documentation
 
-Documentation is [published on Pursuit](https://puresuit.purescript.org/packages/purescript-morph)
+Documentation is [published on Pursuit](https://puresuit.purescript.org/packages/purescript-recompose)
