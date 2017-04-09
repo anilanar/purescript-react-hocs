@@ -66,7 +66,7 @@ main = runKarma do
   suite "context" do
     test "withContext and getContext"
       let
-        wrapper = mount (createElement messageListWithContext { messages: ["Hello World!"] } []) (toForeign {})
+        wrapper = mount $ createElement messageListWithContext { messages: ["Hello World!"] } []
         btn = E.findReactClass wrapper button
         btnProps = E.props btn
 
@@ -92,7 +92,7 @@ main = runKarma do
         cls :: ReactClass { msg :: String }
         cls = setDisplayName "HelloClsMapped" $ mapProps f helloCls
 
-        wrapper = E.find (mount (createElement cls { msg: "Hello World!" } []) (toForeign {})) ".msg"
+        wrapper = E.find (mount $ createElement cls { msg: "Hello World!" } []) ".msg"
 
         readProps :: Foreign -> F { msg :: String }
         readProps value = do
