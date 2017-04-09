@@ -1,5 +1,5 @@
 {
-  "name": "purescript-morph",
+  "name": "purescript-recompose",
   "license": "MIT",
   "ignore": [
     "**/.*",
@@ -9,9 +9,9 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/coot/purescript-morph.git"
+    "url": "git://github.com/coot/purescript-recompose.git"
   },
-  "homepage": "https://github.com/coot/purescript-morph",
+  "homepage": "https://github.com/coot/purescript-recompose",
   "dependencies": {
     "purescript-prelude": "^3.0.0",
     "purescript-console": "^3.0.0",

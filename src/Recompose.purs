@@ -1,11 +1,11 @@
-module Morph
+module Recompose
   ( withContext
   , getFromContext
   , getContext
   ) where
 
 import Prelude
-import Morph.Class
+import Recompose.Class
 import Optic.Setter (set)
 import React (ReactClass, ReactElement, ReactSpec)
 import React as R

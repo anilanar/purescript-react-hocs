@@ -1,5 +1,5 @@
 {
-  "name": "purescript-morph",
+  "name": "purescript-recompose",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/coot/purescript-morph.git"
+    "url": "git://github.com/coot/purescript-recompose.git"
   },
   "author": "Marcin Szamotulski",
   "license": "MIT",

@@ -1,4 +1,4 @@
-module Morph.Class where
+module Recompose.Class where
 
 import Optic.Types (Lens)
 

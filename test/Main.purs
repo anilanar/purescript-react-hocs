@@ -1,7 +1,7 @@
 module Test.Main where
 
 import Prelude
-import Morph
+
 import Enzyme.ReactWrapper as E
 import React.DOM as R
 import React.DOM.Props as RP
@@ -12,12 +12,14 @@ import Data.Array as A
 import Data.Foreign (Foreign, toForeign)
 import Data.Newtype (class Newtype, unwrap)
 import Enzyme.Mount (mount)
-import Morph.Class (class WithContextProps)
 import React (ReactClass, createClass, createElement, getChildren, getProps, spec)
 import Test.Unit (success, suite, test, timeout)
 import Test.Unit.Assert (assert, equal)
 import Test.Unit.Karma (runKarma)
 import Unsafe.Coerce (unsafeCoerce)
+
+import Recompose
+import Recompose.Class (class WithContextProps)
 
 newtype ButtonProps = ButtonProps { color :: String }
 
