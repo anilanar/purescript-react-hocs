@@ -22,7 +22,7 @@
   "devDependencies": {
     "purescript-psci-support": "^3.0.0",
     "purescript-test-unit": "^11.0.0",
-    "purescript-karma-test-unit": "git://github.com/coot/purescript-karma-test-unit#purescript-0.11",
-    "purescript-enzyme": "git://github.com/coot/purescript-enzyme#master"
+    "purescript-karma-test-unit": "^1.0.1",
+    "purescript-enzyme": "^0.0.1"
   }
 }
