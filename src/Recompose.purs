@@ -4,14 +4,14 @@ module Recompose
   , getContext
   , mapProps
   , mapPropsSpec
+  , setDisplayName
   ) where
 
 import Prelude
-import Recompose.Class
-import Optic.Setter (set)
-import React (ReactClass, ReactElement, ReactSpec)
+import Recompose.Class (class WithContextProps)
 import React as R
 import Thermite as T
+import React (ReactClass, ReactElement, ReactSpec)
 
 foreign import withContext
   :: forall props ctx
@@ -87,3 +87,9 @@ mapPropsSpec f sp = (R.spec unit renderFn) { displayName = sp.displayName <> "Ma
   -     performAction a p = sp.performAction a (f p)
   -     render a p = sp.render a (f p)
   --}
+
+foreign import setDisplayName
+  :: forall props
+   . String
+  -> ReactClass props
+  -> ReactClass props
