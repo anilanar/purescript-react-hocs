@@ -14,4 +14,4 @@ bower install purescript-recompose
 
 # Documentation
 
-Documentation is [published on Pursuit](https://puresuit.purescript.org/packages/purescript-recompose)
+Documentation is [published on Pursuit](https://pursuit.purescript.org/packages/purescript-recompose)
