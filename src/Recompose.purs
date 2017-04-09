@@ -8,7 +8,7 @@ module Recompose
   ) where
 
 import Prelude
-import Recompose.Class (class WithContextProps)
+import Recompose.Class (class WithContextProps, setCtx)
 import React as R
 import Thermite as T
 import React (ReactClass, ReactElement, ReactSpec)
