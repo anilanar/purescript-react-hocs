@@ -1,6 +1,6 @@
 module Morph.Class where
 
-import Optic.Types (Lens')
+import Optic.Types (Lens)
 
-class WithContextProps props ctx where
-  ctxLens :: Lens' props ctx
+class WithContextProps props' props ctx where
+  setCtx :: ctx -> props' -> props

@@ -8,12 +8,21 @@
     "postinstall": "bower install"
   },
   "scripts": {
-    "test": "pulp -w test"
+    "postinstall": "bower i",
+    "pretest": "pulp build -O -I test -m Test.Main > karma/test.js && browserify -e karma/test.js -i 'react/addons' -i 'react/lib/ReactContext' -i 'react/lib/ExecutionEnvironment' -o karma/index.js",
+    "test": "karma start --single-run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/coot/purescript-morph.git"
   },
   "author": "Marcin Szamotulski",
   "license": "MIT",
   "dependencies": {
+    "enzyme": "^2.8.0",
+    "prop-types": "^15.5.4",
     "react": "^15.4.2",
+    "react-addons-test-utils": "^15.5.0",
     "react-dom": "^15.4.2"
   }
 }

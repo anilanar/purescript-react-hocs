@@ -1,5 +1,6 @@
 module Morph
   ( withContext
+  , getFromContext
   , getContext
   ) where
 
@@ -17,28 +18,28 @@ foreign import withContext
   -> ReactClass props
 
 foreign import getFromContext_
-  :: forall props ctx ctx'
-   . (ctx' -> props -> props)
+  :: forall props props' ctx ctx'
+   . (ctx' -> props' -> props)
   -> (ctx -> ctx')
   -> ReactClass props
-  -> ReactClass props
+  -> ReactClass props'
 
 getFromContext
-  :: forall props ctx ctx'
-   . (WithContextProps props ctx')
+  :: forall props props' ctx ctx'
+   . (WithContextProps props' props ctx')
   => (ctx -> ctx')
   -> ReactClass props
-  -> ReactClass props
-getFromContext f cls = getFromContext_ setCtx f cls
+  -> ReactClass props'
+getFromContext f cls = getFromContext_ setCtx_ f cls
   where
-    setCtx :: ctx' -> props -> props
-    setCtx = set ctxLens
+    setCtx_ :: ctx' -> props' -> props
+    setCtx_ = setCtx
 
 getContext
-  :: forall props ctx
-   . (WithContextProps props ctx)
+  :: forall props props' ctx
+   . (WithContextProps props' props ctx)
   => ReactClass props
-  -> ReactClass props
+  -> ReactClass props'
 getContext = getFromContext id_
   where
     id_ :: ctx -> ctx
