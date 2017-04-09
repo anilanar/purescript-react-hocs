@@ -2,6 +2,8 @@ module Recompose
   ( withContext
   , getFromContext
   , getContext
+  , mapProps
+  , mapPropsSpec
   ) where
 
 import Prelude
