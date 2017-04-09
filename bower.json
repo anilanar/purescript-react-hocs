@@ -1,5 +1,6 @@
 {
   "name": "purescript-morph",
+  "license": "MIT",
   "ignore": [
     "**/.*",
     "node_modules",
