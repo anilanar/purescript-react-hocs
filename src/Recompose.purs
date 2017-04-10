@@ -2,8 +2,8 @@ module Recompose
   ( withContext
   , getFromContext
   , getContext
-  , mapProps
-  , mapPropsSpec
+  , cmapProps
+  , cmapPropsSpec
   , setDisplayName
   ) where
 
@@ -49,24 +49,24 @@ getContext = getFromContext id_
 
 -- |
 -- Turn `ReactClass` into contravariant functor
-mapProps
+cmapProps
   :: forall props props'
    . (props' -> props)
   -> ReactClass props
   -> ReactClass props'
-mapProps f cls = R.createClassStateless renderFn
+cmapProps f cls = R.createClassStateless renderFn
   where
     renderFn :: props' -> ReactElement
     renderFn props' = R.createElement cls (f props') []
 
 -- |
 -- Turn `ReactSpec` into contravariant functor
-mapPropsSpec
+cmapPropsSpec
   :: forall props props' state eff
    . (props' -> props)
   -> ReactSpec props state eff
   -> ReactSpec props' Unit eff
-mapPropsSpec f sp = (R.spec unit renderFn) { displayName = sp.displayName <> "Mapped" }
+cmapPropsSpec f sp = (R.spec unit renderFn) { displayName = sp.displayName <> "Mapped" }
   where
     cls = R.createClass sp
     renderFn this = do

@@ -76,8 +76,8 @@ main = runKarma do
         let color = _.color <<< coerceProps $ btnProps
         assert ("wrong context has been passed: " <> color) (color == "#a0a0a0")
 
-  suite "mapProps" do
-    test "mapProps" 
+  suite "cmapProps" do
+    test "cmapProps" 
       let
         helloCls :: ReactClass { text :: String }
         helloCls = createClass $ (spec unit renderFn) { displayName = "HelloCls" }
@@ -90,7 +90,7 @@ main = runKarma do
         f text = { text: text.msg }
 
         cls :: ReactClass { msg :: String }
-        cls = setDisplayName "HelloClsMapped" $ mapProps f helloCls
+        cls = setDisplayName "HelloClsMapped" $ cmapProps f helloCls
 
         wrapper = E.find (mount $ createElement cls { msg: "Hello World!" } []) ".msg"
 
