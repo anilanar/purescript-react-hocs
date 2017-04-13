@@ -1,5 +1,5 @@
 {
-  "name": "purescript-recompose",
+  "name": "purescript-react-hocs",
   "license": "MIT",
   "ignore": [
     "**/.*",
@@ -9,9 +9,9 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/coot/purescript-recompose.git"
+    "url": "git://github.com/coot/purescript-react-hocs.git"
   },
-  "homepage": "https://github.com/coot/purescript-recompose",
+  "homepage": "https://github.com/coot/purescript-react-hocs",
   "dependencies": {
     "purescript-prelude": "^3.0.0",
     "purescript-console": "^3.0.0",

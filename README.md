@@ -9,9 +9,9 @@ inspired by [recompose](https://github.com/acdlite/recompose).
 # Installation
 
 ```
-bower install purescript-recompose
+bower install purescript-react-hocs
 ```
 
 # Documentation
 
-Documentation is [published on Pursuit](https://pursuit.purescript.org/packages/purescript-recompose)
+Documentation is [published on Pursuit](https://pursuit.purescript.org/packages/purescript-react-hocs)

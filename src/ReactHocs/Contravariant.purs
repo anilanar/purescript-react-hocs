@@ -1,4 +1,4 @@
-module Recompose.Contravariant
+module ReactHocs.Contravariant
   ( cmapProps
   , cmapPropsSpec
   ) where
@@ -6,7 +6,7 @@ module Recompose.Contravariant
 import Prelude
 import React as R
 import React (ReactClass, ReactElement, ReactSpec)
-import Recompose.DisplayName (getDisplayName, mapDisplayName)
+import ReactHocs.DisplayName (getDisplayName, mapDisplayName)
 
 -- | Turn `ReactClass` into contravariant functor
 -- | It returns a React stateless component

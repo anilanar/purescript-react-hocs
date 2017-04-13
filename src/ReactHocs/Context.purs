@@ -1,4 +1,4 @@
-module Recompose.Context
+module ReactHocs.Context
   ( withContext
   , getFromContext
   , getContext
@@ -6,7 +6,7 @@ module Recompose.Context
 
 import React (ReactClass)
 
-import Recompose.Class (class WithContextProps, setCtx)
+import ReactHocs.Class (class WithContextProps, setCtx)
 
 foreign import withContext
   :: forall props ctx

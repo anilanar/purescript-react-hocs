@@ -1,4 +1,4 @@
-module Recompose.Defer 
+module ReactHocs.Defer 
   ( deferByAnimationFrame
   ) where
 
@@ -7,7 +7,7 @@ import Control.Monad.Eff (Eff)
 import React as R
 import React (ReactClass, ReactSpec, ReactElement)
 
-import Recompose.DisplayName (getDisplayName)
+import ReactHocs.DisplayName (getDisplayName)
 
 foreign import nullElement :: ReactElement
 

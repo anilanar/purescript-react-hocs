@@ -1,4 +1,4 @@
-module Recompose.DisplayName
+module ReactHocs.DisplayName
   ( getDisplayName
   , mapDisplayName
   , setDisplayName
