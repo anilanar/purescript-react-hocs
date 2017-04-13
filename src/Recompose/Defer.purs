@@ -25,8 +25,11 @@ deferByAnimationFrame
 deferByAnimationFrame count cls = (R.spec { count } renderFn)
     { displayName = getDisplayName cls <> "Defer"
     , componentDidMount = componentDidMount
+    , shouldComponentUpdate = shouldComponentUpdate
     }
   where
+    shouldComponentUpdate this props state = pure $ state.count == 0
+
     componentDidMount this = do
       requestAnimationFrame (frmEff this)
 
