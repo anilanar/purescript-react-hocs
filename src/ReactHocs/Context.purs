@@ -4,7 +4,9 @@ module ReactHocs.Context
   , getContext
   ) where
 
+import Prelude (id, flip, const, ($))
 import React (ReactClass)
+import Data.Lens (Lens', view, lens)
 
 import ReactHocs.Class (class WithContextProps, setCtx)
 
@@ -24,10 +26,10 @@ foreign import getFromContext_
 getFromContext
   :: forall props props' ctx ctx'
    . (WithContextProps props' props ctx')
-  => (ctx -> ctx')
+  => Lens' ctx ctx'
   -> ReactClass props
   -> ReactClass props'
-getFromContext f cls = getFromContext_ setCtx_ f cls
+getFromContext _lens cls = getFromContext_ setCtx_ (view _lens) cls
   where
     setCtx_ :: ctx' -> props' -> props
     setCtx_ = setCtx
@@ -37,7 +39,7 @@ getContext
    . (WithContextProps props' props ctx)
   => ReactClass props
   -> ReactClass props'
-getContext = getFromContext id_
+getContext = getFromContext _id
   where
-    id_ :: ctx -> ctx
-    id_ x = x
+    _id :: Lens' ctx ctx
+    _id = lens id (flip $ const id)

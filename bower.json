@@ -17,7 +17,8 @@
     "purescript-console": "^3.0.0",
     "purescript-thermite": "^4.0.0",
     "purescript-proxy": "^2.0.0",
-    "purescript-generics": "^4.0.0"
+    "purescript-generics": "^4.0.0",
+    "purescript-profunctor-lenses": "^3.2.0"
   },
   "devDependencies": {
     "purescript-psci-support": "^3.0.0",
