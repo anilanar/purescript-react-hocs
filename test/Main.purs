@@ -62,7 +62,7 @@ messageListWithContext = withContext messageList "#a0a0a0"
 main :: forall eff. Eff (console :: CONSOLE, avar :: AVAR | eff) Unit
 main = runKarma do
   suite "context" do
-    test "withContext and getContext"
+    test "getContext"
       let
         wrapper = mount $ createElement messageListWithContext { messages: ["Hello World!"] } []
         btn = E.findReactClass wrapper button
@@ -74,14 +74,39 @@ main = runKarma do
         let color = _.color <<< coerceProps $ btnProps
         assert ("wrong context has been passed: " <> color) (color == "#a0a0a0")
 
+    test "readContext"
+      let
+        child :: ReactClass Unit
+        child = accessContext $ createClass $ (spec unit renderChild) { displayName = "Child" }
+        renderChild this = do
+          ctx <- readContext (Proxy :: Proxy String) this
+          pure $ R.div [ RP.className "child", RP._data { ctx } ] [ R.text ctx ]
+
+        parent :: ReactClass Unit
+        parent = (flip withContext) "test-string" $ createClass $ (spec unit renderParent) { displayName = "Parent" }
+        renderParent this = do
+          pure $ createElement child unit []
+
+        wrapper = flip E.find ".child" $ mount $ createElement parent unit []
+
+        readProps :: Foreign -> F { ctx :: String }
+        readProps value = do
+          ctx <- value ! "data-ctx" >>= readString
+          pure { ctx }
+
+      in do
+        case runExcept $ readProps $ E.props wrapper of
+          Left _ -> failure "ups..."
+          Right { ctx } -> assert ("wrong ctx " <> ctx)  $ ctx == "test-string"
+
   suite "cmapProps" do
-    test "cmapProps" 
+    test "cmapProps"
       let
         helloCls :: ReactClass { text :: String }
         helloCls = createClass $ (spec unit renderFn) { displayName = "HelloCls" }
 
         renderFn this = do
-          text <- getProps this >>= (pure <<< _.text)
+          text <- getProps this >>= pure <<< _.text
           pure $ R.div [ RP.className "msg", RP._data { msg: text } ] [ R.text text ]
 
         f :: { msg :: String } -> { text :: String }
@@ -90,13 +115,13 @@ main = runKarma do
         cls :: ReactClass { msg :: String }
         cls = setDisplayName "HelloClsMapped" $ cmapProps f helloCls
 
-        wrapper = E.find (mount $ createElement cls { msg: "Hello World!" } []) ".msg"
+        wrapper = flip E.find ".msg" $ mount $ createElement cls { msg: "Hello World!" } []
 
         readProps :: Foreign -> F { msg :: String }
         readProps value = do
           msg <- value ! "data-msg" >>= readString
           pure { msg }
-      in 
+      in
         case runExcept $ readProps $ E.props wrapper of
           Left _ -> failure "ups..."
           Right props -> do

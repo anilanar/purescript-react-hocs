@@ -2,14 +2,20 @@ module ReactHocs.Context
   ( withContext
   , getFromContext
   , getContext
+  , accessContext
+  , readContext
+  , CONTEXT
   ) where
 
 import Prelude (id, flip, const, ($))
-import React (ReactClass)
+import Control.Monad.Eff (kind Effect, Eff)
 import Data.Lens (Lens', view, lens)
+import React (ReactClass, ReactThis)
 import Type.Proxy (Proxy)
 
 import ReactHocs.Class (class WithContextProps, setCtx)
+
+foreign import data CONTEXT :: Effect
 
 foreign import withContext
   :: forall props ctx
@@ -46,3 +52,16 @@ getContext p = getFromContext _id
   where
     _id :: Lens' ctx ctx
     _id = lens id (flip $ const id)
+
+-- | This function mutates the component by adding `contextTypes` property.
+foreign import accessContext
+  :: forall props
+   . ReactClass props
+  -> ReactClass props
+
+-- | You can use it with components that were passed through `accessContext`.
+foreign import readContext
+  :: forall props state eff ctx
+   . Proxy ctx
+  -> ReactThis props state
+  -> Eff (context :: CONTEXT | eff) ctx
