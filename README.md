@@ -1,4 +1,4 @@
-# purescript-recompose
+# purescript-react-hocs
 
 A set of higher order compontents for
 [purescript-react](https://pursuit.purescript.org/packages/purescript-react)
