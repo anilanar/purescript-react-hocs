@@ -1,7 +1,8 @@
 module Test.Main where
 
 import Prelude
-import Recompose
+import ReactHocs
+import ReactHocs.Class (class WithContextProps)
 import Enzyme.ReactWrapper as E
 import React.DOM as R
 import React.DOM.Props as RP
@@ -15,7 +16,6 @@ import Data.Foreign.Index ((!))
 import Data.Newtype (class Newtype, unwrap)
 import Enzyme.Mount (mount)
 import React (ReactClass, createClass, createElement, getChildren, getProps, spec)
-import Recompose.Class (class WithContextProps)
 import Test.Unit (failure, suite, test)
 import Test.Unit.Assert (assert, equal)
 import Test.Unit.Karma (runKarma)
