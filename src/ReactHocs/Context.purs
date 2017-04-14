@@ -7,6 +7,7 @@ module ReactHocs.Context
 import Prelude (id, flip, const, ($))
 import React (ReactClass)
 import Data.Lens (Lens', view, lens)
+import Type.Proxy (Proxy)
 
 import ReactHocs.Class (class WithContextProps, setCtx)
 
@@ -37,9 +38,11 @@ getFromContext _lens cls = getFromContext_ setCtx_ (view _lens) cls
 getContext
   :: forall props props' ctx
    . (WithContextProps props' props ctx)
-  => ReactClass props
+  -- proxy is needed to resolve WithContextProps
+  => Proxy ctx
+  -> ReactClass props
   -> ReactClass props'
-getContext = getFromContext _id
+getContext p = getFromContext _id
   where
     _id :: Lens' ctx ctx
     _id = lens id (flip $ const id)

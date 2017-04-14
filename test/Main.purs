@@ -14,6 +14,7 @@ import Data.Either (Either(..))
 import Data.Foreign (F, Foreign, readString, toForeign)
 import Data.Foreign.Index ((!))
 import Data.Newtype (class Newtype, unwrap)
+import Type.Proxy (Proxy(..))
 import Enzyme.Mount (mount)
 import React (ReactClass, createClass, createElement, getChildren, getProps, spec)
 import Test.Unit (failure, suite, test)
@@ -37,10 +38,7 @@ button = createClass $ (spec unit renderFn) { displayName = "Button" }
       pure $ R.button [ RP.className "btn", RP.style { background: color } ] children
 
 buttonWithContext :: ReactClass Unit
-buttonWithContext = getFromContext id_ button
-  where
-    id_ :: String -> String
-    id_ s = s
+buttonWithContext = getContext (Proxy :: Proxy String) button
 
 message :: ReactClass { text :: String }
 message = createClass $ (spec unit renderFn) { displayName = "Message" }
