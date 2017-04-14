@@ -1,4 +1,4 @@
-module ReactHocs.Null where
+module ReactHocs.NullElement where
 
 import React (ReactElement)
 
