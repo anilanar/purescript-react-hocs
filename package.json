@@ -9,7 +9,7 @@
   },
   "scripts": {
     "postinstall": "bower i",
-    "pretest": "pulp build -O -I test -m Test.Main > karma/test.js && browserify -e karma/test.js -i 'react/addons' -i 'react/lib/ReactContext' -i 'react/lib/ExecutionEnvironment' -o karma/index.js",
+    "pretest": "pulp build -I test -m Test.Main -t karma/test.js && browserify -e karma/test.js -i 'react/addons' -i 'react/lib/ReactContext' -i 'react/lib/ExecutionEnvironment' -o karma/index.js",
     "test": "karma start --single-run"
   },
   "repository": {
