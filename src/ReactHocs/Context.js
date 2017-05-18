@@ -1,11 +1,12 @@
 "use strict"
 
 var React = require("react")
+var createReactClass = require("create-react-class")
 var PropTypes = require("prop-types")
 
 exports.withContext = function(BaseClass) {
   return function(ctx) {
-    var cls = React.createClass({
+    var cls = createReactClass({
       displayName: "WithContext",
       getChildContext: function() {
         return { ctx: ctx }
