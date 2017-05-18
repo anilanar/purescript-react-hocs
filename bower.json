@@ -15,7 +15,7 @@
   "dependencies": {
     "purescript-prelude": "^3.0.0",
     "purescript-console": "^3.0.0",
-    "purescript-thermite": "^4.0.0",
+    "purescript-react": "git://github.com/coot/purescript-react#react-15",
     "purescript-proxy": "^2.0.0",
     "purescript-generics": "^4.0.0",
     "purescript-profunctor-lenses": "^3.2.0"
@@ -24,6 +24,6 @@
     "purescript-psci-support": "^3.0.0",
     "purescript-test-unit": "^11.0.0",
     "purescript-karma-test-unit": "^1.0.1",
-    "purescript-enzyme": "^0.0.1"
+    "purescript-enzyme": "git://github.com/coot/purescript-enzyme#react-15"
   }
 }
