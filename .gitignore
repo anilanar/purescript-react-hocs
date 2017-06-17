@@ -3,3 +3,5 @@
 /output
 /karma
 /.psci_modules
+.*.sw[po]
+.*.un~
