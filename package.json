@@ -9,6 +9,7 @@
   },
   "scripts": {
     "postinstall": "bower i",
+    "build": "pulp build",
     "pretest": "pulp build -I test -m Test.Main -t karma/test.js && browserify -e karma/test.js -i 'react/addons' -i 'react/lib/ReactContext' -i 'react/lib/ExecutionEnvironment' -o karma/index.js",
     "test": "karma start --single-run"
   },
@@ -25,6 +26,7 @@
     "create-react-class": "^15.5.3",
     "enzyme": "^2.8.2",
     "prop-types": "^15.5.4",
+    "pulp": "^11.0.0",
     "react": "^15.5.4",
     "react-addons-test-utils": "^15.5.0",
     "react-dom": "^15.4.2",
