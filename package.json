@@ -25,11 +25,16 @@
   "devDependencies": {
     "create-react-class": "^15.5.3",
     "enzyme": "^2.8.2",
+    "karma": "^1.7.0",
+    "karma-chrome-launcher": "^2.1.1",
+    "karma-spec-reporter": "0.0.31",
     "prop-types": "^15.5.4",
     "pulp": "^11.0.0",
     "react": "^15.5.4",
     "react-addons-test-utils": "^15.5.0",
     "react-dom": "^15.4.2",
     "react-test-renderer": "^15.5.4"
+  },
+  "dependencies": {
   }
 }
