@@ -3,18 +3,16 @@ module ReactHocs.Refs
   , readRef
   ) where
 
+import Control.Monad.Eff (Eff)
 import DOM.Node.Types (Node, readNode)
 import Data.Foreign (F, Foreign, toForeign)
 import Data.Foreign.Index (readProp)
-import Prelude (join, ($), (<$>))
-import React (Refs)
+import Prelude (join, pure, ($), (<$>))
+import React (ReactRefs, Read)
 import React.DOM.Props (Props, unsafeMkProps)
 
 ref :: String -> Props
 ref = unsafeMkProps "ref"
 
-readRef :: String -> Foreign -> F Node
-readRef name refs = join $ readNode <$> prop
-  where
-    prop :: F Foreign
-    prop = readProp name (toForeign refs)
+readRef :: forall access eff. String -> Foreign ->  Eff (refs :: ReactRefs (read :: Read | access) | eff) (F Node) 
+readRef name refs = pure $ join $ readNode <$> readProp name (toForeign refs)
