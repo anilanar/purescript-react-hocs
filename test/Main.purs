@@ -1,7 +1,5 @@
 module Test.Main where
 
-import ReactHocs
-
 import Control.Monad.Aff.AVar (AVAR)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
@@ -12,16 +10,18 @@ import DOM (DOM)
 import DOM.HTML.Types (htmlElementToElement)
 import DOM.Node.Element (id) as Element
 import DOM.Node.Types (ElementId(..))
-import Data.Either (Either(Right, Left))
+import Data.Either (Either(..))
 import Data.Foreign (F, Foreign, readString, toForeign)
 import Data.Foreign.Index ((!))
 import Data.Newtype (class Newtype, unwrap)
 import Enzyme.Mount (mount)
 import Enzyme.ReactWrapper as E
+import Enzyme.Types (ENZYME)
 import Prelude (Unit, bind, discard, flip, pure, unit, ($), (<$>), (<<<), (<>), (==), (>>=))
 import React (ReactClass, createClass, createElement, getChildren, getProps, spec)
 import React.DOM as R
 import React.DOM.Props as RP
+import ReactHocs (accessContext, cmapProps, getContext, readContext, readRef, ref, setDisplayName, withContext)
 import ReactHocs.Class (class WithContextProps)
 import Test.Unit (failure, suite, test)
 import Test.Unit.Assert (assert)
@@ -66,20 +66,20 @@ messageList = createClass $ (spec unit renderFn) { displayName = "MessageList" }
 messageListWithContext :: ReactClass { messages :: Array String }
 messageListWithContext = withContext messageList "#a0a0a0"
 
-main :: forall eff. Eff (console :: CONSOLE, avar :: AVAR, dom :: DOM | eff) Unit
+main :: forall eff. Eff (avar :: AVAR,  console :: CONSOLE, dom :: DOM, enzyme :: ENZYME | eff) Unit
 main = runKarma do
   suite "context" do
-    test "getContext"
-      let
-        wrapper = mount $ createElement messageListWithContext { messages: ["Hello World!"] } []
-        btn = E.findReactClass wrapper button
-        btnProps = E.props btn
+    test "getContext" do
+      btnProps <- liftEff $ do
+        wrapper <- mount (createElement messageListWithContext { messages: ["Hello World!"] } [])
+        E.findReactClass button wrapper >>= E.props
 
+      let
         coerceProps :: Foreign -> { color :: String }
         coerceProps = unsafeCoerce
-      in do
-        let color = _.color <<< coerceProps $ btnProps
-        assert ("wrong context has been passed: " <> color) (color == "#a0a0a0")
+        color = _.color <<< coerceProps $ btnProps
+
+      assert ("wrong context has been passed: " <> color) (color == "#a0a0a0")
 
     test "readContext"
       let
@@ -94,15 +94,14 @@ main = runKarma do
         renderParent this = do
           pure $ createElement child unit []
 
-        wrapper = flip E.find ".child" $ mount $ createElement parent unit []
-
         readProps :: Foreign -> F { ctx :: String }
         readProps value = do
           ctx <- value ! "data-ctx" >>= readString
           pure { ctx }
 
       in do
-        case runExcept $ readProps $ E.props wrapper of
+        props <- liftEff $ mount (createElement parent unit []) >>= E.find ".child" >>= E.props
+        case runExcept $ readProps props of
           Left _ -> failure "ups..."
           Right { ctx } -> assert ("wrong ctx " <> ctx)  $ ctx == "test-string"
 
@@ -122,14 +121,17 @@ main = runKarma do
         cls :: ReactClass { msg :: String }
         cls = setDisplayName "HelloClsMapped" $ cmapProps f helloCls
 
-        wrapper = flip E.find ".msg" $ mount $ createElement cls { msg: "Hello World!" } []
-
         readProps :: Foreign -> F { msg :: String }
         readProps value = do
           msg <- value ! "data-msg" >>= readString
           pure { msg }
-      in
-        case runExcept $ readProps $ E.props wrapper of
+
+      in do
+        fprops <- liftEff do
+          wrp <- mount $ createElement cls { msg: "Hello World!" } []
+          E.find ".msg" wrp >>= E.props
+
+        case runExcept $ readProps fprops of
           Left _ -> failure "ups..."
           Right props -> do
             let text = props.msg
@@ -144,12 +146,15 @@ main = runKarma do
         renderFn this = do
           pure $ R.div [ ref "div", RP._id "ref" ] []
 
-        wrp = mount $ createElement cls unit []
-
-        element = E.getDOMNode $ flip E.ref "div" $ wrp
       in do
-        ElementId eid <- liftEff $ Element.id (htmlElementToElement element)
-        assert ("wrong element got: " <> eid <> "\n" <> E.debug wrp) $ eid == "ref"
+        wrp <- liftEff $ mount $ createElement cls unit []
+
+        ElementId eid <- liftEff do
+          element <- E.ref "div" wrp >>= E.getDOMNode 
+          liftEff $ Element.id (htmlElementToElement element)
+
+        str <- liftEff $ E.debug wrp
+        assert ("wrong element got: " <> eid <> "\n" <> str) $ eid == "ref"
 
     test "readRef"
       let
@@ -159,15 +164,19 @@ main = runKarma do
         renderFn this = do
           pure $ R.div [ ref "div", RP._id "ref" ] []
 
-        wrp = mount $ createElement cls unit []
-
-        refs :: Foreign
-        refs = toForeign $ (unsafeCoerce (E.instance_ wrp)).refs
-
       in do
+        wrp <- liftEff $ mount (createElement cls unit [])
+        inst <- liftEff $ E.instance_ wrp
+
+        let
+          refs :: Foreign
+          refs = toForeign $ (unsafeCoerce inst).refs
+
+        debugStr <- liftEff $ E.debug wrp
+
         fnode <- liftEff (unsafeCoerceEff $ readRef "div" refs)
         case runExcept fnode of
-          Left _ -> failure ("reference div not found\n" <> E.debug wrp)
+          Left _ -> failure ("reference div not found\n" <> debugStr)
           Right node -> do
             ElementId eid <- liftEff $ Element.id (unsafeCoerce node)
-            assert ("wrong element got: " <> eid <> "\n" <> E.debug wrp) $ eid == "ref"
+            assert ("wrong element got: " <> eid <> "\n" <> debugStr) $ eid == "ref"
