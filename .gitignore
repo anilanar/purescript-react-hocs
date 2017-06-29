@@ -5,3 +5,4 @@
 /.psci_modules
 .*.sw[po]
 .*.un~
+/todo.md
