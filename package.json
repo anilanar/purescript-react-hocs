@@ -27,6 +27,7 @@
     "enzyme": "^2.8.2",
     "karma": "^1.7.0",
     "karma-chrome-launcher": "^2.2.0",
+    "karma-firefox-launcher": "^1.0.1",
     "karma-spec-reporter": "0.0.31",
     "prop-types": "^15.5.4",
     "pulp": "^11.0.0",
