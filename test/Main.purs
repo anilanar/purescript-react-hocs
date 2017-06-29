@@ -1,25 +1,29 @@
 module Test.Main where
 
-import Prelude
-import ReactHocs
-import ReactHocs.Class (class WithContextProps)
-import Enzyme.ReactWrapper as E
-import React.DOM as R
-import React.DOM.Props as RP
+import Prelude (Unit, bind, discard, flip, pure, unit, ($), (<$>), (<<<), (<>), (==), (>>=))
+import ReactHocs (accessContext, cmapProps, getContext, readContext, setDisplayName, withContext)
+
 import Control.Monad.Aff.AVar (AVAR)
 import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Except (runExcept)
+import DOM (DOM)
 import Data.Either (Either(..))
-import Data.Foreign (F, Foreign, readString, toForeign)
+import Data.Foreign (F, Foreign, readString)
 import Data.Foreign.Index ((!))
 import Data.Newtype (class Newtype, unwrap)
-import Type.Proxy (Proxy(..))
 import Enzyme.Mount (mount)
+import Enzyme.ReactWrapper as E
+import Enzyme.Types (ENZYME)
 import React (ReactClass, createClass, createElement, getChildren, getProps, spec)
+import React.DOM as R
+import React.DOM.Props as RP
+import ReactHocs.Class (class WithContextProps)
 import Test.Unit (failure, suite, test)
-import Test.Unit.Assert (assert, equal)
+import Test.Unit.Assert (assert)
 import Test.Unit.Karma (runKarma)
+import Type.Proxy (Proxy(..))
 import Unsafe.Coerce (unsafeCoerce)
 
 newtype ButtonProps = ButtonProps { color :: String }
@@ -59,20 +63,20 @@ messageList = createClass $ (spec unit renderFn) { displayName = "MessageList" }
 messageListWithContext :: ReactClass { messages :: Array String }
 messageListWithContext = withContext messageList "#a0a0a0"
 
-main :: forall eff. Eff (console :: CONSOLE, avar :: AVAR | eff) Unit
+main :: forall eff. Eff (avar :: AVAR,  console :: CONSOLE, dom :: DOM, enzyme :: ENZYME | eff) Unit
 main = runKarma do
   suite "context" do
-    test "getContext"
-      let
-        wrapper = mount $ createElement messageListWithContext { messages: ["Hello World!"] } []
-        btn = E.findReactClass wrapper button
-        btnProps = E.props btn
+    test "getContext" do
+      btnProps <- liftEff $ do
+        wrapper <- mount (createElement messageListWithContext { messages: ["Hello World!"] } [])
+        E.findReactClass button wrapper >>= E.props
 
+      let
         coerceProps :: Foreign -> { color :: String }
         coerceProps = unsafeCoerce
-      in do
-        let color = _.color <<< coerceProps $ btnProps
-        assert ("wrong context has been passed: " <> color) (color == "#a0a0a0")
+        color = _.color <<< coerceProps $ btnProps
+
+      assert ("wrong context has been passed: " <> color) (color == "#a0a0a0")
 
     test "readContext"
       let
@@ -87,15 +91,14 @@ main = runKarma do
         renderParent this = do
           pure $ createElement child unit []
 
-        wrapper = flip E.find ".child" $ mount $ createElement parent unit []
-
         readProps :: Foreign -> F { ctx :: String }
         readProps value = do
           ctx <- value ! "data-ctx" >>= readString
           pure { ctx }
 
       in do
-        case runExcept $ readProps $ E.props wrapper of
+        props <- liftEff $ mount (createElement parent unit []) >>= E.find ".child" >>= E.props
+        case runExcept $ readProps props of
           Left _ -> failure "ups..."
           Right { ctx } -> assert ("wrong ctx " <> ctx)  $ ctx == "test-string"
 
@@ -115,14 +118,17 @@ main = runKarma do
         cls :: ReactClass { msg :: String }
         cls = setDisplayName "HelloClsMapped" $ cmapProps f helloCls
 
-        wrapper = flip E.find ".msg" $ mount $ createElement cls { msg: "Hello World!" } []
-
         readProps :: Foreign -> F { msg :: String }
         readProps value = do
           msg <- value ! "data-msg" >>= readString
           pure { msg }
-      in
-        case runExcept $ readProps $ E.props wrapper of
+
+      in do
+        fprops <- liftEff do
+          wrp <- mount $ createElement cls { msg: "Hello World!" } []
+          E.find ".msg" wrp >>= E.props
+
+        case runExcept $ readProps fprops of
           Left _ -> failure "ups..."
           Right props -> do
             let text = props.msg
