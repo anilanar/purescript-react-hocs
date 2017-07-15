@@ -26,6 +26,6 @@
     "purescript-test-unit": "^11.0.0",
     "purescript-karma-test-unit": "^1.0.1",
     "purescript-debug": "^3.0.0",
-    "purescript-enzyme": "^0.2.0"
+    "purescript-enzyme": "^0.6.0"
   }
 }
