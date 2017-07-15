@@ -1,8 +1,8 @@
 module ReactHocs.InOutTransition
   ( inOutTransition
   , inOutTransitionSpec
-  , InOutState
-  , InOutProps
+  , InOutState(..)
+  , InOutProps(..)
   ) where
 
 import Control.Monad.Eff (Eff)
@@ -22,6 +22,7 @@ import React.DOM.Props (onAnimationEnd, onTransitionEnd)
 
 newtype InOutState = InOutState
   { mounting :: Boolean
+  , mounted :: Boolean
   , unmounting :: Boolean
   , frameId :: Maybe RequestAnimationFrameId
   }
@@ -34,12 +35,15 @@ newtype InOutProps eff = InOutProps
   { mounted :: Boolean
   , onUnmount :: Event -> Eff eff Unit
   , className :: String
-  -- | classNameIn applied when mounting component and stays until component gets `mounted = false`
+  -- | classNameIn is applied only when mounting the component
   -- | it is first applied using `requestAnimationFrame` so that the initial
   -- | state of the commponent can be described by the `className` css class.
   , classNameIn :: String
   -- | applied when the component receives `mounted` property set to `false`.
   , classNameOut :: String
+  -- | className that is applied after the animatin in ends, and is removed
+  -- | when unmounting animationstarts
+  , classNameMounted :: String
   }
 
 derive instance newtypeInOutProps :: Newtype (InOutProps e) _
@@ -69,6 +73,7 @@ inOutTransitionSpec = (spec' getInitialState render)
       pure (InOutState
         { mounting: not mounted
         , unmounting: false
+        , mounted: mounted
         , frameId: Just frameId
         })
 
@@ -77,24 +82,28 @@ inOutTransitionSpec = (spec' getInitialState render)
       maybe (pure unit) (\fid -> window >>= cancelAnimationFrame fid) frameId
 
     componentWillReceiveProps this (InOutProps { mounted }) = do
-      transformState this (over InOutState (_ { mounting = mounted, unmounting = not mounted }))
+      InOutProps { mounted: mntd } <- getProps this
+      transformState this (over InOutState (_ { mounting = mounted, unmounting = not mounted, mounted = false }))
 
     onEnd this ev = do
       InOutState { unmounting } <- readState this
       if unmounting
         then do
+          _ <- transformState this (over InOutState (_ { mounted = false, unmounting = false }))
           InOutProps { onUnmount } <- getProps this
           onUnmount ev
-        else pure unit
+        else
+          transformState this (over InOutState (_ { mounting = false, mounted = true }))
 
     render this = do
-      InOutProps { className, classNameIn, classNameOut } <- getProps this
-      InOutState { mounting, unmounting } <- readState this
+      InOutProps { className, classNameIn, classNameOut, classNameMounted } <- getProps this
+      InOutState { mounting, unmounting, mounted } <- readState this
       children <- getChildren this
       let class_ = classNames
             [ Just className
             , if mounting then Just classNameIn else Nothing
             , if unmounting then Just classNameOut else Nothing
+            , if mounted then Just classNameMounted else Nothing
             ]
       pure $ div
         [ P.className class_

@@ -5,30 +5,34 @@ import Control.Monad.Aff.AVar (AVAR)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (CONSOLE)
+import Control.Monad.Eff.Exception (message) as Exception
 import Control.Monad.Eff.Unsafe (unsafeCoerceEff)
+import Control.Monad.Error.Class (catchError)
 import Control.Monad.Except (runExcept)
-import Control.Monad.ST (ST, newSTRef, readSTRef, writeSTRef)
+import Control.Monad.ST (ST, STRef, modifySTRef, newSTRef, readSTRef, writeSTRef)
 import DOM (DOM)
 import DOM.HTML.Types (htmlElementToElement)
+import DOM.Node.Element (className)
 import DOM.Node.Element (id) as Element
 import DOM.Node.Types (ElementId(..))
 import Data.Either (Either(..))
 import Data.Foldable (intercalate)
-import Data.Foreign (F, Foreign, readBoolean, readString, renderForeignError, toForeign)
+import Data.Foreign (F, Foreign, readBoolean, readInt, readString, renderForeignError, toForeign)
 import Data.Foreign.Index ((!))
-import Data.Newtype (class Newtype, unwrap)
+import Data.Maybe (Maybe(..), isJust)
+import Data.Newtype (class Newtype, over, unwrap, wrap)
 import Enzyme.Mount (mount)
 import Enzyme.ReactWrapper (ReactWrapper)
 import Enzyme.ReactWrapper as E
 import Enzyme.Types (ENZYME)
-import Prelude (Unit, bind, discard, flip, join, pure, show, unit, void, ($), (*>), (<$>), (<<<), (<>), (==), (>>=))
-import React (ReactClass, ReactElement, ReactProps, ReactRefs, ReactSpec, ReactState, ReactThis, ReadOnly, createClass, createElement, getChildren, getProps, readState, spec, writeState)
+import Prelude (class Eq, class Show, Unit, add, bind, const, discard, flip, join, map, pure, show, unit, void, ($), (*>), (<$>), (<*), (<*>), (<<<), (<>), (==), (>>=))
+import React (ReactClass, ReactElement, ReactProps, ReactRefs, ReactSpec, ReactState, ReactThis, ReadOnly, ReadWrite, createClass, createElement, getChildren, getProps, readState, spec, writeState)
 import React.DOM as R
 import React.DOM.Props as RP
-import ReactHocs (accessContext, cmapProps, getContext, readContext, readRef, ref, setDisplayName, withContext)
+import ReactHocs (InOutProps(InOutProps), InOutState(InOutState), accessContext, cmapProps, getContext, inOutTransition, readContext, readRef, ref, setDisplayName, withContext)
 import ReactHocs.Class (class WithContextProps)
 import ReactHocs.IsMounted (isMounted, readIsMounted)
-import Test.Unit (failure, suite, test)
+import Test.Unit (Test, failure, suite, test)
 import Test.Unit.Assert (assert, equal)
 import Test.Unit.Karma (runKarma)
 import Type.Proxy (Proxy(..))
@@ -71,7 +75,12 @@ messageList = createClass $ (spec unit renderFn) { displayName = "MessageList" }
 messageListWithContext :: ReactClass { messages :: Array String }
 messageListWithContext = withContext messageList "#a0a0a0"
 
-main :: forall eff stateRef. Eff (avar :: AVAR,  console :: CONSOLE, dom :: DOM, enzyme :: ENZYME, st :: ST stateRef | eff) Unit
+equal' :: forall a e. Eq a => Show a => String -> a -> a -> Test e
+equal' s exp act = 
+  catchError (equal exp act)
+    (\e -> failure (s <> " " <> Exception.message e))
+
+main :: forall eff testRef. Eff (avar :: AVAR,  console :: CONSOLE, dom :: DOM, enzyme :: ENZYME, st :: ST testRef | eff) Unit
 main = runKarma do
   suite "context" do
     test "getContext" do
@@ -198,8 +207,8 @@ main = runKarma do
          .  Boolean
         -> ReactClass props
         -> props
-        -> (ReactWrapper -> Eff (enzyme :: ENZYME, dom :: DOM, avar :: AVAR, console :: CONSOLE, st :: ST stateRef | eff) Unit)
-        -> Aff ( console :: CONSOLE, avar :: AVAR, dom :: DOM, enzyme :: ENZYME, st :: ST stateRef | eff) Unit
+        -> (ReactWrapper -> Eff (enzyme :: ENZYME, dom :: DOM, avar :: AVAR, console :: CONSOLE, st :: ST testRef | eff) Unit)
+        -> Aff ( console :: CONSOLE, avar :: AVAR, dom :: DOM, enzyme :: ENZYME, st :: ST testRef | eff) Unit
       execute expected cls props act = do
         st <- liftEff $ do
           wrp <- mount (createElement cls props [])
@@ -233,7 +242,7 @@ main = runKarma do
       test "should be true in componentWillUnmount" do
         ref <- liftEff $ newSTRef false
         let
-          sp :: forall e. ReactSpec Unit Boolean (st :: ST stateRef | e)
+          sp :: forall e. ReactSpec Unit Boolean (st :: ST testRef | e)
           sp =  (spec false render)
             { componentWillUnmount = \this -> (readIsMounted this >>= writeSTRef ref) *> (pure unit) }
         isMnt <- liftEff $ do
@@ -241,5 +250,219 @@ main = runKarma do
           readSTRef ref
 
         equal true isMnt
+  
+  suite "InOutTransition"
+    let
+      readMaybeInt :: Foreign -> F (Maybe Int)
+      readMaybeInt value =
+        catchError
+          (Just <$> (value ! "value0" >>= readInt))
+          (\_ -> pure Nothing)
 
-        
+      readInOutState :: Foreign -> F InOutState
+      readInOutState value =
+        InOutState <$> (
+          {mounting: _, unmounting: _, mounted: _, frameId: _}
+          <$> (value ! "mounting" >>= readBoolean)
+          <*> (value ! "unmounting" >>= readBoolean)
+          <*> (value ! "mounted" >>= readBoolean)
+          <*> (value ! "frameId" >>= map (map wrap) <<< readMaybeInt)
+        )
+
+      props :: forall e. InOutProps ( props :: ReactProps, refs :: ReactRefs ReadOnly, state :: ReactState ReadWrite | e)
+      props = InOutProps
+        { mounted: false
+        , onUnmount: const (pure unit)
+        , className: "base"
+        , classNameIn: "in"
+        , classNameOut: "out"
+        , classNameMounted: "mounted"
+        }
+
+      propsEnd :: forall e. InOutProps ( props :: ReactProps, refs :: ReactRefs ReadOnly, state :: ReactState ReadWrite | e)
+      propsEnd = over InOutProps (_ { mounted = false }) props
+
+      propsRestart :: forall e. InOutProps ( props :: ReactProps, refs :: ReactRefs ReadOnly, state :: ReactState ReadWrite | e)
+      propsRestart = over InOutProps (_ { mounted = true }) props
+
+      getClassName :: forall e. ReactWrapper -> Eff (dom :: DOM, enzyme :: ENZYME | e) String
+      getClassName wrp =
+        E.getDOMNode wrp
+        >>= className <<< htmlElementToElement
+
+      getStateAndClassName :: forall e. ReactWrapper -> Eff (dom :: DOM, enzyme :: ENZYME | e) { st :: F Foreign, css :: String }
+      getStateAndClassName wrp =
+        { st: _, css: _ }
+        <$> E.state wrp
+        <*> getClassName wrp
+        <* E.unmount wrp
+
+      cycle :: forall e. ReactWrapper -> Eff (dom :: DOM, enzyme :: ENZYME | e) ReactWrapper
+      cycle wrp =
+        E.setProps propsRestart wrp
+        >>= E.simulate "animationEnd"
+        >>= E.setProps propsEnd
+        >>= E.simulate "animationEnd"
+
+      firstCycle :: forall e. Eff (dom :: DOM, enzyme :: ENZYME | e) ReactWrapper
+      firstCycle =
+        mount (createElement inOutTransition props [])
+        >>= E.simulate "animationEnd"
+        >>= E.setProps propsEnd
+        >>= E.simulate "animationEnd"
+
+    in do
+      test "onOnmount" do
+        ref <- liftEff $ (newSTRef 0 :: Eff (avar :: AVAR, console :: CONSOLE, dom :: DOM, enzyme :: ENZYME, st :: ST testRef | eff) (STRef testRef Int))
+        let
+          p :: forall e. InOutProps (st :: ST testRef | e)
+          p = over InOutProps (_ { onUnmount = \ev -> void $ modifySTRef ref (add 1) } ) props
+
+          pEnd :: forall e. InOutProps (st :: ST testRef | e)
+          pEnd = over InOutProps (_ { mounted = false }) p
+
+          pRestart :: forall e. InOutProps (st :: ST testRef | e)
+          pRestart = over InOutProps (_ { mounted = true }) p
+
+        count <- liftEff $
+            (mount (createElement inOutTransition p [])
+              >>= E.simulate "animationEnd"
+              >>= E.setProps pEnd
+              >>= E.simulate "animationEnd"
+              >>= E.unmount)
+              *> readSTRef ref
+        equal' "count:" 1 count
+
+        _ <- liftEff $ writeSTRef ref 0
+        count' <- liftEff $
+            (mount (createElement inOutTransition p [])
+              >>= E.simulate "animationEnd"
+              >>= E.setProps pEnd
+              >>= E.simulate "animationEnd"
+              >>= E.setProps pRestart
+              >>= E.simulate "animationEnd"
+              >>= E.setProps pEnd
+              >>= E.simulate "animationEnd"
+              >>= E.unmount)
+              *> readSTRef ref
+        equal' "count:" 2 count'
+
+      test "initial state" do
+        { st, css } <- liftEff $ do
+          mount (createElement inOutTransition props [])
+          >>= getStateAndClassName
+
+        case runExcept $ join (readInOutState <$> st) of
+          Left err -> failure $ "state reading error: " <> (intercalate " " (renderForeignError <$> err))
+          Right (InOutState { mounting, unmounting, mounted, frameId }) -> do
+            equal' "mounting:" true mounting
+            equal' "unmounting:" false unmounting
+            equal' "mounted:" false mounted
+            equal' "mounted:" true (isJust frameId)
+            equal' "css:" "base in" css
+
+      test "state after initial animationEnd" do
+        { st, css } <- liftEff $
+            mount (createElement inOutTransition props [])
+            >>= E.simulate "animationEnd"
+            >>= getStateAndClassName
+
+        case runExcept $ join (readInOutState <$> st) of
+          Left err -> failure $ "state reading error: " <> (intercalate " " (renderForeignError <$> err))
+          Right (InOutState { mounting, unmounting, mounted, frameId }) -> do
+            equal' "mounting:" false mounting
+            equal' "unmounting:" false unmounting
+            equal' "mounted:" true mounted
+            equal' "fameId:" true (isJust frameId)
+            equal' "css:" "base mounted" css
+
+      test "state 1-st cycle + after initial animationEnd" do
+        { st, css } <- liftEff $
+          firstCycle
+          >>= E.simulate "animationEnd"
+          >>= getStateAndClassName
+
+        case runExcept $ join (readInOutState <$> st) of
+          Left err -> failure $ "state reading error: " <> (intercalate " " (renderForeignError <$> err))
+          Right (InOutState { mounting, unmounting, mounted, frameId }) -> do
+            equal' "mounting:" false mounting
+            equal' "unmounting:" false unmounting
+            equal' "mounted:" true mounted
+            equal' "fameId:" true (isJust frameId)
+            equal' "css:" "base mounted" css
+
+      test "state after unmount animation started" do
+        { st, css } <- liftEff $
+          mount (createElement inOutTransition props [])
+          >>= E.simulate "animationEnd"
+          >>= E.setProps propsEnd
+          >>= getStateAndClassName
+
+        case runExcept $ join (readInOutState <$> st) of
+          Left err -> failure $ "state reading error: " <> (intercalate " " (renderForeignError <$> err))
+          Right (InOutState { mounting, unmounting, mounted, frameId }) -> do
+            equal' "mounting:" false mounting
+            equal' "unmounting:" true unmounting
+            equal' "mounted:" false mounted
+            equal' "css:" "base out" css
+
+      test "state 1-st cycle + after unmount animation started" do
+        { st, css } <- liftEff $
+          firstCycle
+          >>= E.simulate "animationEnd"
+          >>= E.setProps propsEnd
+          >>= getStateAndClassName
+
+        case runExcept $ join (readInOutState <$> st) of
+          Left err -> failure $ "state reading error: " <> (intercalate " " (renderForeignError <$> err))
+          Right (InOutState { mounting, unmounting, mounted, frameId }) -> do
+            equal' "mounting:" false mounting
+            equal' "unmounting:" true unmounting
+            equal' "mounted:" false mounted
+            equal' "css:" "base out" css
+
+      test "state after unmount animation finished" do
+        { st, css } <- liftEff $
+          firstCycle
+          >>= getStateAndClassName
+
+        case runExcept $ join (readInOutState <$> st) of
+          Left err -> failure $ "state reading error: " <> (intercalate " " (renderForeignError <$> err))
+          Right (InOutState { mounting, unmounting, mounted, frameId }) -> do
+            equal' "mounting:" false mounting
+            equal' "unmounting:" false unmounting
+            equal' "mounted:" false mounted
+            equal' "css:" "base" css
+
+      test "end of 2-nd cycle" do
+        { st, css } <- liftEff $
+          firstCycle
+          >>= cycle
+          >>= getStateAndClassName
+
+        case runExcept $ join (readInOutState <$> st) of
+          Left err -> failure $ "state reading error: " <> (intercalate " " (renderForeignError <$> err))
+          Right (InOutState { mounting, unmounting, mounted, frameId }) -> do
+            equal' "mounting:" false mounting
+            equal' "unmounting:" false unmounting
+            equal' "mounted:" false mounted
+            equal' "css:" "base" css
+
+      test "after 3.5-cycles" do
+        { st, css }  <- liftEff $
+          firstCycle
+          >>= cycle
+          >>= cycle
+          >>= E.setProps propsRestart
+          >>= E.simulate "animationEnd"
+          >>= getStateAndClassName
+
+        case runExcept $ join (readInOutState <$> st) of
+          Left err -> failure $ "state reading error: " <> (intercalate " " (renderForeignError <$> err))
+          Right (InOutState { mounting, unmounting, mounted, frameId }) -> do
+            equal' "mounting:" false mounting
+            equal' "unmounting:" false unmounting
+            equal' "mounted:" true mounted
+            equal' "css:" "base mounted" css
+
+
