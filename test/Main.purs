@@ -1,30 +1,35 @@
 module Test.Main where
 
+import Control.Monad.Aff (Aff)
 import Control.Monad.Aff.AVar (AVAR)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Unsafe (unsafeCoerceEff)
 import Control.Monad.Except (runExcept)
+import Control.Monad.ST (ST, newSTRef, readSTRef, writeSTRef)
 import DOM (DOM)
 import DOM.HTML.Types (htmlElementToElement)
 import DOM.Node.Element (id) as Element
 import DOM.Node.Types (ElementId(..))
 import Data.Either (Either(..))
-import Data.Foreign (F, Foreign, readString, toForeign)
+import Data.Foldable (intercalate)
+import Data.Foreign (F, Foreign, readBoolean, readString, renderForeignError, toForeign)
 import Data.Foreign.Index ((!))
 import Data.Newtype (class Newtype, unwrap)
 import Enzyme.Mount (mount)
+import Enzyme.ReactWrapper (ReactWrapper)
 import Enzyme.ReactWrapper as E
 import Enzyme.Types (ENZYME)
-import Prelude (Unit, bind, discard, flip, pure, unit, ($), (<$>), (<<<), (<>), (==), (>>=))
-import React (ReactClass, createClass, createElement, getChildren, getProps, spec)
+import Prelude (Unit, bind, discard, flip, join, pure, show, unit, void, ($), (*>), (<$>), (<<<), (<>), (==), (>>=))
+import React (ReactClass, ReactElement, ReactProps, ReactRefs, ReactSpec, ReactState, ReactThis, ReadOnly, createClass, createElement, getChildren, getProps, readState, spec, writeState)
 import React.DOM as R
 import React.DOM.Props as RP
 import ReactHocs (accessContext, cmapProps, getContext, readContext, readRef, ref, setDisplayName, withContext)
 import ReactHocs.Class (class WithContextProps)
+import ReactHocs.IsMounted (isMounted, readIsMounted)
 import Test.Unit (failure, suite, test)
-import Test.Unit.Assert (assert)
+import Test.Unit.Assert (assert, equal)
 import Test.Unit.Karma (runKarma)
 import Type.Proxy (Proxy(..))
 import Unsafe.Coerce (unsafeCoerce)
@@ -66,7 +71,7 @@ messageList = createClass $ (spec unit renderFn) { displayName = "MessageList" }
 messageListWithContext :: ReactClass { messages :: Array String }
 messageListWithContext = withContext messageList "#a0a0a0"
 
-main :: forall eff. Eff (avar :: AVAR,  console :: CONSOLE, dom :: DOM, enzyme :: ENZYME | eff) Unit
+main :: forall eff stateRef. Eff (avar :: AVAR,  console :: CONSOLE, dom :: DOM, enzyme :: ENZYME, st :: ST stateRef | eff) Unit
 main = runKarma do
   suite "context" do
     test "getContext" do
@@ -180,3 +185,61 @@ main = runKarma do
           Right node -> do
             ElementId eid <- liftEff $ Element.id (unsafeCoerce node)
             assert ("wrong element got: " <> eid <> "\n" <> debugStr) $ eid == "ref"
+
+  suite "isMounted" 
+    let
+      render :: forall props e. ReactThis props Boolean -> Eff ( state :: ReactState ReadOnly, props :: ReactProps, refs :: ReactRefs () | e ) ReactElement
+      render this = do
+        isMnt <- readState this
+        pure (R.div' [ R.text (show isMnt) ])
+
+      execute
+        :: forall props
+         .  Boolean
+        -> ReactClass props
+        -> props
+        -> (ReactWrapper -> Eff (enzyme :: ENZYME, dom :: DOM, avar :: AVAR, console :: CONSOLE, st :: ST stateRef | eff) Unit)
+        -> Aff ( console :: CONSOLE, avar :: AVAR, dom :: DOM, enzyme :: ENZYME, st :: ST stateRef | eff) Unit
+      execute expected cls props act = do
+        st <- liftEff $ do
+          wrp <- mount (createElement cls props [])
+          act wrp
+          st <- E.state wrp
+          _ <- E.unmount wrp
+          pure st
+        case runExcept $ join (readBoolean <$> st) of
+          Left err -> failure $ "state reading error: " <> (intercalate " " (renderForeignError <$> err))
+          Right isMnt -> equal expected isMnt
+    in do
+      test "should be false in ComponentWillMount"
+        let
+          sp :: forall e. ReactSpec Unit Boolean e
+          sp =  (spec false render)
+            { componentWillMount = \this -> (readIsMounted this >>= writeState this) *> (pure unit) }
+        in execute false (createClass $ isMounted sp) unit (\_ -> pure unit)
+      test "should be true in componentDidMount"
+        let
+          sp :: forall e. ReactSpec Unit Boolean e
+          sp = (spec false render)
+            { componentDidMount = \this -> (readIsMounted this >>= writeState this) *> (pure unit) }
+        in execute true (createClass $ isMounted sp) unit (\_ -> pure unit)
+      test "should be true in componentWillReceiveProps"
+        let
+          sp :: forall e. ReactSpec { p :: Int } Boolean e
+          sp =  (spec false render)
+            { componentWillReceiveProps = \this _ -> (readIsMounted this >>= writeState this) *> (pure unit) }
+        in 
+          execute true (createClass $ isMounted sp) {p:0} (void <<< E.setProps {p:1})
+      test "should be true in componentWillUnmount" do
+        ref <- liftEff $ newSTRef false
+        let
+          sp :: forall e. ReactSpec Unit Boolean (st :: ST stateRef | e)
+          sp =  (spec false render)
+            { componentWillUnmount = \this -> (readIsMounted this >>= writeSTRef ref) *> (pure unit) }
+        isMnt <- liftEff $ do
+          _ <- mount (createElement (createClass $ isMounted sp) unit []) >>= E.unmount
+          readSTRef ref
+
+        equal true isMnt
+
+        
