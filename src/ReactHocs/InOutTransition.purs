@@ -1,4 +1,4 @@
-module ReactHocs.InOut
+module ReactHocs.InOutTransition
   ( inOutTransition
   , inOutTransitionSpec
   , InOutState
