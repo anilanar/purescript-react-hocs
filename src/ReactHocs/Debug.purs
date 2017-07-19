@@ -12,6 +12,7 @@ debugSpec spec = spec
   { componentDidMount = componentDidMount
   , componentWillUpdate = componentWillUpdate
   , shouldComponentUpdate = shouldComponentUpdate
+  , componentWillUnmount = componentWillUnmount
   }
 
  where
@@ -35,3 +36,8 @@ debugSpec spec = spec
       name <- displayName this
       traceA (name <> " shouldComponentUpdate: " <> show shouldUpdate)
       pure shouldUpdate
+
+    componentWillUnmount this = do
+      name <- displayName this
+      traceA (name <> " componentWillUnmount")
+      spec.componentWillUnmount this
