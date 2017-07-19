@@ -17,7 +17,7 @@ debugSpec spec = spec
  where
     displayName :: forall edn. ReactThis p s -> Eff edn String
     displayName this = do
-      pure (unsafeCoerce this).__proto__.constructor.name
+      pure (unsafeCoerce this).__proto__.constructor.displayName
 
     componentDidMount this = do
       name <- displayName this
