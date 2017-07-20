@@ -2,12 +2,12 @@ module ReactHocs.Debug
   ( debugSpec ) where
 
 import Control.Monad.Eff (Eff)
-import Debug.Trace (traceA, traceAnyA)
+import Debug.Trace (class DebugWarning, traceA, traceAnyA)
 import Prelude (bind, discard, pure, show, (<>))
 import React (ReactSpec, ReactThis)
 import Unsafe.Coerce (unsafeCoerce)
 
-debugSpec :: forall p s e. ReactSpec p s e -> ReactSpec p s e
+debugSpec :: forall p s e. DebugWarning => ReactSpec p s e -> ReactSpec p s e
 debugSpec spec = spec
   { componentDidMount = componentDidMount
   , componentWillUpdate = componentWillUpdate
