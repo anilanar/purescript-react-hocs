@@ -1,8 +1,8 @@
 # purescript-react-hocs
 
 [![Maintainer: coot](https://img.shields.io/badge/maintainer-coot-lightgrey.svg)](http://github.com/coot)
-[![Documentation](https://pursuit.purescript.org/packages/purescript-react-hocs/badge)](https://pursuit.purescript.org/packages/purescript-enzyme)
-[![Build Status](https://travis-ci.org/coot/purescript-react-hocs.svg?branch=master)](https://travis-ci.org/coot/purescript-enzyme)
+[![Documentation](https://pursuit.purescript.org/packages/purescript-react-hocs/badge)](https://pursuit.purescript.org/packages/purescript-react-hocs)
+[![Build Status](https://travis-ci.org/coot/purescript-react-hocs.svg?branch=master)](https://travis-ci.org/coot/purescript-react-hocs)
 
 A set of higher order compontents for
 [purescript-react](https://pursuit.purescript.org/packages/purescript-react)
