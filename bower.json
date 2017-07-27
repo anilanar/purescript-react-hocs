@@ -19,7 +19,8 @@
     "purescript-proxy": "^2.0.0",
     "purescript-generics": "^4.0.0",
     "purescript-profunctor-lenses": "^3.2.0",
-    "purescript-dom": "^4.5.0"
+    "purescript-dom": "^4.5.0",
+    "purescript-debug": "^3.0.0"
   },
   "devDependencies": {
     "purescript-psci-support": "^3.0.0",
