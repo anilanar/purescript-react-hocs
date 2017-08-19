@@ -23,11 +23,12 @@ import Enzyme.ReactWrapper as E
 import Enzyme.Types (ENZYME)
 import Prelude (Unit, bind, discard, flip, join, pure, show, unit, void, ($), (*>), (<$>), (<<<), (<>), (==), (>>=))
 import React (ReactClass, ReactElement, ReactProps, ReactRefs, ReactSpec, ReactState, ReactThis, ReadOnly, createClass, createElement, getChildren, getProps, readState, spec, writeState)
+import React.Ix (createClassIx)
 import React.DOM as R
 import React.DOM.Props as RP
 import ReactHocs (accessContext, cmapProps, getContext, readContext, readRef, ref, setDisplayName, withContext)
 import ReactHocs.Class (class WithContextProps)
-import ReactHocs.IsMounted (isMounted, readIsMounted)
+import ReactHocs.IsMounted (isMounted, unsafeReadIsMounted)
 import Test.Unit (failure, suite, test)
 import Test.Unit.Assert (assert, equal)
 import Test.Unit.Karma (runKarma)
@@ -215,29 +216,29 @@ main = runKarma do
         let
           sp :: forall e. ReactSpec Unit Boolean e
           sp =  (spec false render)
-            { componentWillMount = \this -> (readIsMounted this >>= writeState this) *> (pure unit) }
-        in execute false (createClass $ isMounted sp) unit (\_ -> pure unit)
+            { componentWillMount = \this -> (unsafeReadIsMounted this >>= writeState this) *> (pure unit) }
+        in execute false (createClassIx $ isMounted sp) unit (\_ -> pure unit)
       test "should be true in componentDidMount"
         let
           sp :: forall e. ReactSpec Unit Boolean e
           sp = (spec false render)
-            { componentDidMount = \this -> (readIsMounted this >>= writeState this) *> (pure unit) }
-        in execute true (createClass $ isMounted sp) unit (\_ -> pure unit)
+            { componentDidMount = \this -> (unsafeReadIsMounted this >>= writeState this) *> (pure unit) }
+        in execute true (createClassIx $ isMounted sp) unit (\_ -> pure unit)
       test "should be true in componentWillReceiveProps"
         let
           sp :: forall e. ReactSpec { p :: Int } Boolean e
           sp =  (spec false render)
-            { componentWillReceiveProps = \this _ -> (readIsMounted this >>= writeState this) *> (pure unit) }
+            { componentWillReceiveProps = \this _ -> (unsafeReadIsMounted this >>= writeState this) *> (pure unit) }
         in 
-          execute true (createClass $ isMounted sp) {p:0} (void <<< E.setProps {p:1})
+          execute true (createClassIx $ isMounted sp) {p:0} (void <<< E.setProps {p:1})
       test "should be true in componentWillUnmount" do
         ref <- liftEff $ newSTRef false
         let
           sp :: forall e. ReactSpec Unit Boolean (st :: ST stateRef | e)
           sp =  (spec false render)
-            { componentWillUnmount = \this -> (readIsMounted this >>= writeSTRef ref) *> (pure unit) }
+            { componentWillUnmount = \this -> (unsafeReadIsMounted this >>= writeSTRef ref) *> (pure unit) }
         isMnt <- liftEff $ do
-          _ <- mount (createElement (createClass $ isMounted sp) unit []) >>= E.unmount
+          _ <- mount (createElement (createClassIx $ isMounted sp) unit []) >>= E.unmount
           readSTRef ref
 
         equal true isMnt
