@@ -13,6 +13,7 @@ import DOM.HTML.Types (htmlElementToElement)
 import DOM.Node.Element (id) as Element
 import DOM.Node.Types (ElementId(..))
 import Data.Either (Either(..))
+import Data.Enum (succ)
 import Data.Foldable (intercalate)
 import Data.Foreign (F, Foreign, readBoolean, readString, renderForeignError, toForeign)
 import Data.Foreign.Index ((!))
@@ -28,7 +29,7 @@ import React.DOM.Props as RP
 import ReactHocs (accessContext, cmapProps, getContext, readContext, readRef, ref, setDisplayName, withContext)
 import ReactHocs.Class (class WithContextProps)
 import ReactHocs.IsMounted (isMounted, readIsMounted)
-import Test.Unit (failure, suite, test)
+import Test.Unit (failure, success, suite, test)
 import Test.Unit.Assert (assert, equal)
 import Test.Unit.Karma (runKarma)
 import Type.Proxy (Proxy(..))
@@ -241,5 +242,3 @@ main = runKarma do
           readSTRef ref
 
         equal true isMnt
-
-        
