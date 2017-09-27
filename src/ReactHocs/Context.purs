@@ -1,5 +1,6 @@
 module ReactHocs.Context
   ( withContext
+  , withContext'
   , getFromContext
   , getContext
   , accessContext
@@ -17,11 +18,18 @@ import ReactHocs.Class (class WithContextProps, setCtx)
 
 foreign import data CONTEXT :: Effect
 
-foreign import withContext
+foreign import withContext'
   :: forall props ctx
-   . ReactClass props
-  -> ctx
+   . (props -> ctx)
   -> ReactClass props
+  -> ReactClass props
+
+withContext
+  :: forall props ctx
+   . ctx
+  -> ReactClass props
+  -> ReactClass props
+withContext ctx cls = withContext' (\_ -> ctx) cls
 
 foreign import getFromContext_
   :: forall props props' ctx ctx'

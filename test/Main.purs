@@ -13,7 +13,6 @@ import DOM.HTML.Types (htmlElementToElement)
 import DOM.Node.Element (id) as Element
 import DOM.Node.Types (ElementId(..))
 import Data.Either (Either(..))
-import Data.Enum (succ)
 import Data.Foldable (intercalate)
 import Data.Foreign (F, Foreign, readBoolean, readString, renderForeignError, toForeign)
 import Data.Foreign.Index ((!))
@@ -22,14 +21,15 @@ import Enzyme.Mount (mount)
 import Enzyme.ReactWrapper (ReactWrapper)
 import Enzyme.ReactWrapper as E
 import Enzyme.Types (ENZYME)
-import Prelude (Unit, bind, discard, flip, join, pure, show, unit, void, ($), (*>), (<$>), (<<<), (<>), (==), (>>=))
-import React (ReactClass, ReactElement, ReactProps, ReactRefs, ReactSpec, ReactState, ReactThis, ReadOnly, createClass, createElement, getChildren, getProps, readState, spec, writeState)
+import Prelude (Unit, bind, discard, join, pure, show, unit, void, ($), (*>), (<$>), (<<<), (<>), (==), (>>=))
+import React (ReactClass, ReactElement, ReactProps, ReactRefs, ReactSpec, ReactState, ReactThis, ReadOnly, createClass, createClassStateless, createElement, getChildren, getProps, readState, spec, writeState)
 import React.DOM as R
 import React.DOM.Props as RP
 import ReactHocs (accessContext, cmapProps, getContext, readContext, readRef, ref, setDisplayName, withContext)
 import ReactHocs.Class (class WithContextProps)
+import ReactHocs.Context (withContext')
 import ReactHocs.IsMounted (isMounted, readIsMounted)
-import Test.Unit (failure, success, suite, test)
+import Test.Unit (failure, suite, test)
 import Test.Unit.Assert (assert, equal)
 import Test.Unit.Karma (runKarma)
 import Type.Proxy (Proxy(..))
@@ -70,12 +70,15 @@ messageList = createClass $ (spec unit renderFn) { displayName = "MessageList" }
     toMessage text = createElement message { text } []
 
 messageListWithContext :: ReactClass { messages :: Array String }
-messageListWithContext = withContext messageList "#a0a0a0"
+messageListWithContext = withContext "#a0a0a0" messageList
+
+colorProvider :: ReactClass { color :: String }
+colorProvider = withContext' (\{ color } -> color) $ createClassStateless \_ -> createElement buttonWithContext unit []
 
 main :: forall eff stateRef. Eff (avar :: AVAR,  console :: CONSOLE, dom :: DOM, enzyme :: ENZYME, st :: ST stateRef | eff) Unit
 main = runKarma do
   suite "context" do
-    test "getContext" do
+    test "withContext && getContext" do
       btnProps <- liftEff $ do
         wrapper <- mount (createElement messageListWithContext { messages: ["Hello World!"] } [])
         E.findReactClass button wrapper >>= E.props
@@ -87,6 +90,15 @@ main = runKarma do
 
       assert ("wrong context has been passed: " <> color) (color == "#a0a0a0")
 
+    test "withContext' && getContext" do
+      btnProps <- liftEff $ do
+        wrapper <- mount (createElement colorProvider { color: "#bbb" } [])
+        E.findReactClass button wrapper >>= E.props
+      let coerceProps :: Foreign -> { color :: String }
+          coerceProps = unsafeCoerce
+          color = _.color <<< coerceProps $ btnProps
+      assert ("wrong context has been passed: " <> color) (color == "#bbb")
+
     test "readContext"
       let
         child :: ReactClass Unit
@@ -96,7 +108,7 @@ main = runKarma do
           pure $ R.div [ RP.className "child", RP._data { ctx } ] [ R.text ctx ]
 
         parent :: ReactClass Unit
-        parent = (flip withContext) "test-string" $ createClass $ (spec unit renderParent) { displayName = "Parent" }
+        parent = withContext "test-string" $ createClass $ (spec unit renderParent) { displayName = "Parent" }
         renderParent this = do
           pure $ createElement child unit []
 

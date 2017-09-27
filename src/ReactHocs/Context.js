@@ -4,12 +4,13 @@ var React = require("react")
 var createReactClass = require("create-react-class")
 var PropTypes = require("prop-types")
 
-exports.withContext = function(BaseClass) {
-  return function(ctx) {
+exports["withContext'"] = function(getContext) {
+  return function(BaseClass) {
     var cls = createReactClass({
       displayName: "WithContext",
       getChildContext: function() {
-        return { ctx: ctx }
+        var props = this.props
+        return { ctx: getContext(props) }
       },
       render: function() {
         return React.createElement(BaseClass, this.props)
